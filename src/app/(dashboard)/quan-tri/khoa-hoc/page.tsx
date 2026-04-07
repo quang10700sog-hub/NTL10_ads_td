@@ -34,15 +34,29 @@ export default function CoursesPage() {
     setFormError("");
 
     const { data: { user } } = await supabase.auth.getUser();
-    const { error } = await supabase.from("courses").insert({
+    const { data: newCourse, error } = await supabase.from("courses").insert({
       name: formData.name,
       description: formData.description || null,
       created_by: user?.id,
-    });
+    }).select("id").single();
 
     if (error) {
       setFormError(error.message.includes("duplicate") ? "Tên khóa học đã tồn tại" : error.message);
-    } else {
+    } else if (newCourse) {
+      // Auto-add all admin accounts to the new course
+      const { data: admins } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("role", "admin");
+      if (admins?.length) {
+        await supabase.from("course_users").insert(
+          admins.map((a: { id: string }) => ({
+            course_id: newCourse.id,
+            user_id: a.id,
+            role_in_course: "kvt",
+          }))
+        );
+      }
       setShowForm(false);
       setFormData({ name: "", description: "" });
       fetchCourses();

@@ -11,6 +11,8 @@ interface StudentTableProps {
   courseUser: CourseUser | null;
   advisorStudentIds?: string[];
   ntdIdsInMyArea?: string[];
+  /** IDs of students the current user is a linked caretaker for (view-only) */
+  linkedStudentIds?: Set<string>;
   onViewDetail: (student: Student) => void;
   onEdit: (student: Student) => void;
   onAssign: (student: Student) => void;
@@ -28,6 +30,7 @@ export function StudentTable({
   courseUser,
   advisorStudentIds,
   ntdIdsInMyArea,
+  linkedStudentIds,
   onViewDetail,
   onEdit,
   onAssign,
@@ -77,12 +80,12 @@ export function StudentTable({
 
   if (loading) {
     return (
-      <div className="glass rounded-2xl overflow-hidden">
+      <div className="overflow-hidden border border-[var(--color-surface-700)]" style={{ background: 'var(--color-surface-900)' }}>
         <table className="w-full">
           <thead>
             <tr className="border-b border-[var(--color-surface-800)]">
-              {["", "STT", "Họ tên", "SĐT/Zalo", "Người chăm sóc", "NCS Liên kết", "TT Học tập", "TT Liên lạc", "Nội dung CS", "Thao tác"].map((h) => (
-                <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-[var(--color-surface-400)] uppercase">{h}</th>
+              {["", "STT", "Họ tên", "SĐT/Zalo", "Người chăm sóc", "NCS Liên kết", "Địa vực", "Khu vực", "TT Học tập", "TT Liên lạc", "Nội dung CS", "Thao tác"].map((h, i, arr) => (
+                <th key={h} className={`text-left px-4 py-3 text-xs font-semibold text-[var(--color-surface-400)] uppercase ${i < arr.length - 1 ? 'border-r border-[var(--color-surface-700)]' : ''}`}>{h}</th>
               ))}
             </tr>
           </thead>
@@ -102,7 +105,7 @@ export function StudentTable({
 
   if (students.length === 0) {
     return (
-      <div className="glass rounded-2xl p-12 text-center">
+      <div className="p-12 text-center border border-[var(--color-surface-700)]" style={{ background: 'var(--color-surface-900)' }}>
         <svg xmlns="http://www.w3.org/2000/svg" className="w-12 h-12 mx-auto mb-4 text-[var(--color-surface-600)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
           <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
           <circle cx="9" cy="7" r="4" />
@@ -114,12 +117,12 @@ export function StudentTable({
 
   return (
     <>
-    <div className="glass rounded-2xl overflow-hidden">
+    <div className="overflow-hidden border border-[var(--color-surface-700)]" style={{ background: 'var(--color-surface-900)' }}>
       <div className="overflow-x-auto">
         <table className="w-full min-w-[900px]">
           <thead>
-            <tr className="border-b border-[var(--color-surface-800)]">
-              <th className="w-10 px-4 py-3">
+            <tr className="border-b border-[var(--color-surface-700)]" style={{ background: 'rgba(30, 41, 59, 0.6)' }}>
+              <th className="w-10 px-4 py-3 border-r border-[var(--color-surface-700)]">
                 <input
                   type="checkbox"
                   checked={selectedIds.size === students.length && students.length > 0}
@@ -127,15 +130,17 @@ export function StudentTable({
                   className="rounded border-[var(--color-surface-600)] accent-[var(--color-primary-500)]"
                 />
               </th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-[var(--color-surface-400)] uppercase w-12">STT</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-[var(--color-surface-400)] uppercase min-w-[140px]">Họ tên</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-[var(--color-surface-400)] uppercase">SĐT/Zalo</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-[var(--color-surface-400)] uppercase">Người chăm sóc</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-[var(--color-surface-400)] uppercase">NCS Liên kết</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-[var(--color-surface-400)] uppercase min-w-[120px]">TT Học tập</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-[var(--color-surface-400)] uppercase min-w-[120px]">TT Liên lạc</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-[var(--color-surface-400)] uppercase min-w-[160px]">Nội dung CS</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-[var(--color-surface-400)] uppercase">Ghi chú TVV</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold text-[var(--color-surface-400)] uppercase w-12 border-r border-[var(--color-surface-700)]">STT</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold text-[var(--color-surface-400)] uppercase min-w-[140px] border-r border-[var(--color-surface-700)]">Họ tên</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold text-[var(--color-surface-400)] uppercase border-r border-[var(--color-surface-700)]">SĐT/Zalo</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold text-[var(--color-surface-400)] uppercase border-r border-[var(--color-surface-700)]">Người chăm sóc</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold text-[var(--color-surface-400)] uppercase border-r border-[var(--color-surface-700)]">NCS Liên kết</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold text-[var(--color-surface-400)] uppercase border-r border-[var(--color-surface-700)]">Địa vực</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold text-[var(--color-surface-400)] uppercase border-r border-[var(--color-surface-700)]">Khu vực</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold text-[var(--color-surface-400)] uppercase min-w-[120px] border-r border-[var(--color-surface-700)]">TT Học tập</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold text-[var(--color-surface-400)] uppercase min-w-[120px] border-r border-[var(--color-surface-700)]">TT Liên lạc</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold text-[var(--color-surface-400)] uppercase min-w-[160px] border-r border-[var(--color-surface-700)]">Nội dung CS</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold text-[var(--color-surface-400)] uppercase border-r border-[var(--color-surface-700)]">Ghi chú TVV</th>
               <th className="text-right px-4 py-3 text-xs font-semibold text-[var(--color-surface-400)] uppercase w-24">Thao tác</th>
             </tr>
           </thead>
@@ -144,15 +149,24 @@ export function StudentTable({
               const perms = getStudentPermissions(userRole, courseUser, student, advisorStudentIds, ntdIdsInMyArea);
               const isHighlighted = highlightedId === student.id;
 
+              // If student is only visible via linked caretaker (different ĐV/KV), force view-only
+              const isLinkedOnly = linkedStudentIds?.has(student.id) && !perms.canEdit;
+              if (isLinkedOnly) {
+                perms.canEdit = false;
+                perms.canDistribute = false;
+                perms.canDelete = false;
+                perms.canEditAdvisorNote = false;
+              }
+
               return (
                 <tr
                   key={student.id}
-                  className={`border-b border-[var(--color-surface-800)] table-row-hover transition-all ${
+                  className={`border-b border-[var(--color-surface-700)] table-row-hover transition-all ${
                     isHighlighted ? "animate-pulse-highlight" : ""
                   } ${selectedIds.has(student.id) ? "bg-[var(--color-primary-600)]/5" : ""}`}
                 >
                   {/* Checkbox */}
-                  <td className="px-4 py-3">
+                  <td className="px-4 py-3 border-r border-[var(--color-surface-800)]">
                     <input
                       type="checkbox"
                       checked={selectedIds.has(student.id)}
@@ -162,12 +176,12 @@ export function StudentTable({
                   </td>
 
                   {/* STT */}
-                  <td className="px-4 py-3 text-sm text-[var(--color-surface-400)]">
+                  <td className="px-4 py-3 text-sm text-[var(--color-surface-400)] border-r border-[var(--color-surface-800)]">
                     {student.stt_order ?? index + 1}
                   </td>
 
                   {/* Họ tên - clickable */}
-                  <td className="px-4 py-3">
+                  <td className="px-4 py-3 border-r border-[var(--color-surface-800)]">
                     <button
                       onClick={() => onViewDetail(student)}
                       className="text-sm font-medium text-[var(--color-primary-400)] hover:text-[var(--color-primary-300)] hover:underline transition-colors text-left"
@@ -177,12 +191,12 @@ export function StudentTable({
                   </td>
 
                   {/* SĐT */}
-                  <td className="px-4 py-3 text-sm text-[var(--color-surface-300)]">
+                  <td className="px-4 py-3 text-sm text-[var(--color-surface-300)] border-r border-[var(--color-surface-800)]">
                     {student.phone_zalo}
                   </td>
 
                   {/* Người chăm sóc */}
-                  <td className="px-4 py-3">
+                  <td className="px-4 py-3 border-r border-[var(--color-surface-800)]">
                     {student.assigned_user?.profile ? (
                       <div className="flex items-center gap-2">
                         <div className="w-6 h-6 rounded-md flex items-center justify-center text-xs font-medium text-white"
@@ -199,7 +213,7 @@ export function StudentTable({
                   </td>
 
                   {/* NCS Liên kết (tối đa 2) */}
-                  <td className="px-4 py-3">
+                  <td className="px-4 py-3 border-r border-[var(--color-surface-800)]">
                     {(() => {
                       const lc1 = student.linked_caretaker_user?.profile;
                       const lc2 = student.linked_caretaker_user_2?.profile;
@@ -256,8 +270,22 @@ export function StudentTable({
                     })()}
                   </td>
 
+                  {/* Địa vực */}
+                  <td className="px-4 py-3 border-r border-[var(--color-surface-800)]">
+                    <span className="text-xs text-[var(--color-surface-400)] truncate">
+                      {(student as any).assigned_user?.unit?.name ?? student.unit?.name ?? "—"}
+                    </span>
+                  </td>
+
+                  {/* Khu vực */}
+                  <td className="px-4 py-3 border-r border-[var(--color-surface-800)]">
+                    <span className="text-xs text-[var(--color-surface-400)] truncate">
+                      {(student as any).assigned_user?.area?.name ?? student.area?.name ?? "—"}
+                    </span>
+                  </td>
+
                   {/* TT Học tập - editable */}
-                  <td className="px-4 py-3">
+                  <td className="px-4 py-3 border-r border-[var(--color-surface-800)]">
                     {editingCell?.id === student.id && editingCell.field === "learning_status" ? (
                       <input
                         autoFocus
@@ -278,7 +306,7 @@ export function StudentTable({
                   </td>
 
                   {/* TT Liên lạc - editable */}
-                  <td className="px-4 py-3">
+                  <td className="px-4 py-3 border-r border-[var(--color-surface-800)]">
                     {editingCell?.id === student.id && editingCell.field === "contact_status" ? (
                       <input
                         autoFocus
@@ -299,7 +327,7 @@ export function StudentTable({
                   </td>
 
                   {/* Nội dung CS - editable */}
-                  <td className="px-4 py-3">
+                  <td className="px-4 py-3 border-r border-[var(--color-surface-800)]">
                     {editingCell?.id === student.id && editingCell.field === "care_content" ? (
                       <input
                         autoFocus
@@ -320,7 +348,7 @@ export function StudentTable({
                   </td>
 
                   {/* Ghi chú TVV */}
-                  <td className="px-4 py-3">
+                  <td className="px-4 py-3 border-r border-[var(--color-surface-800)]">
                     {editingCell?.id === student.id && editingCell.field === "advisor_note" ? (
                       <input
                         autoFocus

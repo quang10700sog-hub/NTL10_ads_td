@@ -29,7 +29,7 @@ export function exportStudentsToExcel(
       "Link Facebook": s.facebook_link ?? "",
       "Nghề nghiệp": s.occupation ?? "",
       "Nơi ở": s.residence ?? "",
-      "Đơn vị": s.unit?.name ?? "",
+      "Địa vực": s.unit?.name ?? "",
       "Khu vực": s.area?.name ?? "",
       "Người chăm sóc": s.assigned_user?.profile?.full_name ?? "",
       "Người CS liên kết 1": s.linked_caretaker_user?.profile?.full_name ?? "",

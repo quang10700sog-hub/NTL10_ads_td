@@ -254,29 +254,29 @@ export default function CourseDetailPage() {
   async function handleCreateUnit(e: React.FormEvent) {
     e.preventDefault();
     const { error } = await supabase.from("units").insert({ course_id: courseId, name: unitName, code: unitCode || null });
-    if (error) { toast.error("Lỗi tạo đơn vị: " + error.message); return; }
+    if (error) { toast.error("Lỗi tạo địa vực: " + error.message); return; }
     setShowUnitForm(false); setUnitName(""); setUnitCode("");
-    toast.success("Đã tạo đơn vị thành công");
+    toast.success("Đã tạo địa vực thành công");
     fetchAll();
   }
 
   async function handleUpdateUnitName(unitId: string, newName: string) {
     const { error } = await supabase.from("units").update({ name: newName }).eq("id", unitId);
     if (error) { toast.error("Lỗi cập nhật: " + error.message); return; }
-    toast.success("Đã cập nhật tên đơn vị");
+    toast.success("Đã cập nhật tên địa vực");
     fetchAll();
   }
 
   async function handleDeleteUnit(unit: Unit) {
     setConfirmDelete({
       open: true,
-      title: "Xóa đơn vị",
+      title: "Xóa địa vực",
       message: `Bạn chắc chắn muốn xóa "${unit.name}"? Tất cả khu vực bên trong cũng sẽ bị xóa.`,
       onConfirm: async () => {
         // Delete areas first
         await supabase.from("areas").delete().eq("unit_id", unit.id);
         const { error } = await supabase.from("units").delete().eq("id", unit.id);
-        if (error) { toast.error("Lỗi xóa: " + error.message); } else { toast.success("Đã xóa đơn vị"); }
+        if (error) { toast.error("Lỗi xóa: " + error.message); } else { toast.success("Đã xóa địa vực"); }
         setConfirmDelete(prev => ({ ...prev, open: false }));
         fetchAll();
       },
@@ -320,10 +320,10 @@ export default function CourseDetailPage() {
 
     // Business Logic: ĐVT requires unit, KV disabled
     if (memberRole === "dvt") {
-      if (!memberUnitId) { toast.warning("Vui lòng chọn đơn vị cho Địa vực trưởng"); return; }
+      if (!memberUnitId) { toast.warning("Vui lòng chọn địa vực cho Địa vực trưởng"); return; }
       const existingDVT = members.find(m => m.unit_id === memberUnitId && m.role_in_course === "dvt");
       if (existingDVT) {
-        toast.error(`Đơn vị này đã có Địa vực trưởng: ${existingDVT.profile?.full_name}`);
+        toast.error(`Địa vực này đã có Địa vực trưởng: ${existingDVT.profile?.full_name}`);
         return;
       }
     }
@@ -418,7 +418,7 @@ export default function CourseDetailPage() {
                 : "border-transparent text-[var(--color-surface-400)] hover:text-[var(--color-surface-200)]"
             }`}>
             {tab === "units" ? <IconBuilding /> : <IconUsers />}
-            {tab === "units" ? `Đơn vị & Khu vực (${units.length})` : `Thành viên (${members.length})`}
+            {tab === "units" ? `Địa vực & Khu vực (${units.length})` : `Thành viên (${members.length})`}
           </button>
         ))}
       </div>
@@ -430,7 +430,7 @@ export default function CourseDetailPage() {
             <button onClick={() => setShowUnitForm(!showUnitForm)}
               className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium text-white transition-all hover:shadow-[var(--shadow-glow)] hover:scale-[1.02] active:scale-[0.98]"
               style={{ background: "linear-gradient(135deg, var(--color-primary-600), var(--color-primary-500))" }}>
-              <IconPlus /> Thêm đơn vị
+              <IconPlus /> Thêm địa vực
             </button>
           )}
 
@@ -438,8 +438,8 @@ export default function CourseDetailPage() {
             <form onSubmit={handleCreateUnit} className="glass rounded-xl p-5 flex gap-3 items-end animate-fade-in"
               style={{ borderColor: "var(--color-surface-600)" }}>
               <div className="flex-1">
-                <label className="block text-xs font-medium text-[var(--color-surface-300)] mb-1.5">Tên đơn vị *</label>
-                <input value={unitName} onChange={e => setUnitName(e.target.value)} required placeholder="VD: Đơn vị 1"
+                <label className="block text-xs font-medium text-[var(--color-surface-300)] mb-1.5">Tên địa vực *</label>
+                <input value={unitName} onChange={e => setUnitName(e.target.value)} required placeholder="VD: Địa vực 1"
                   className="w-full px-3 py-2.5 rounded-lg bg-[var(--color-surface-800)] border border-[var(--color-surface-600)] text-sm text-[var(--color-surface-100)] placeholder-[var(--color-surface-500)] focus:outline-none focus:border-[var(--color-primary-500)] transition-colors" />
               </div>
               <div className="w-36">
@@ -456,8 +456,8 @@ export default function CourseDetailPage() {
           {units.length === 0 ? (
             <div className="text-center py-16">
               <IconBuilding />
-              <p className="text-[var(--color-surface-400)] mt-4">Chưa có đơn vị nào</p>
-              {isAdmin && <p className="text-sm text-[var(--color-surface-500)] mt-1">Nhấn "Thêm đơn vị" để bắt đầu cấu trúc</p>}
+              <p className="text-[var(--color-surface-400)] mt-4">Chưa có địa vực nào</p>
+              {isAdmin && <p className="text-sm text-[var(--color-surface-500)] mt-1">Nhấn "Thêm địa vực" để bắt đầu cấu trúc</p>}
             </div>
           ) : (
             <div className="space-y-4">
@@ -491,7 +491,7 @@ export default function CourseDetailPage() {
                           <IconPlus /> Thêm KV
                         </button>
                         {isAdmin && (
-                          <button onClick={() => handleDeleteUnit(unit)} className="btn-icon-danger" title="Xóa đơn vị">
+                          <button onClick={() => handleDeleteUnit(unit)} className="btn-icon-danger" title="Xóa địa vực">
                             <IconTrash />
                           </button>
                         )}
@@ -589,17 +589,17 @@ export default function CourseDetailPage() {
                 </div>
                 {/* Unit Select */}
                 <div>
-                  <label className="block text-xs font-medium text-[var(--color-surface-300)] mb-1.5">Đơn vị</label>
+                  <label className="block text-xs font-medium text-[var(--color-surface-300)] mb-1.5">Địa vực</label>
                   <select value={memberUnitId} onChange={e => { setMemberUnitId(e.target.value); setMemberAreaId(""); }}
                     className="w-full px-3 py-2.5 rounded-lg bg-[var(--color-surface-800)] border border-[var(--color-surface-600)] text-sm text-[var(--color-surface-100)] focus:outline-none focus:border-[var(--color-primary-500)] transition-colors">
-                    <option value="">— Chọn đơn vị —</option>
+                    <option value="">— Chọn địa vực —</option>
                     {units.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
                   </select>
                 </div>
                 {/* Area Select - disabled for ĐVT */}
                 <div className={isAreaDisabled ? "field-disabled" : ""}>
                   <label className="block text-xs font-medium text-[var(--color-surface-300)] mb-1.5">
-                    Khu vực {isAreaDisabled && <span className="text-[var(--color-surface-500)]">(ĐVT quản lý toàn đơn vị)</span>}
+                    Khu vực {isAreaDisabled && <span className="text-[var(--color-surface-500)]">(ĐVT quản lý toàn địa vực)</span>}
                   </label>
                   <select value={memberAreaId} onChange={e => setMemberAreaId(e.target.value)} disabled={isAreaDisabled}
                     className="w-full px-3 py-2.5 rounded-lg bg-[var(--color-surface-800)] border border-[var(--color-surface-600)] text-sm text-[var(--color-surface-100)] focus:outline-none focus:border-[var(--color-primary-500)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
@@ -629,7 +629,7 @@ export default function CourseDetailPage() {
                   <th className="text-left px-5 py-3.5 text-xs font-semibold text-[var(--color-surface-300)] uppercase tracking-wider">Họ tên</th>
                   <th className="text-left px-5 py-3.5 text-xs font-semibold text-[var(--color-surface-300)] uppercase tracking-wider">Email</th>
                   <th className="text-left px-5 py-3.5 text-xs font-semibold text-[var(--color-surface-300)] uppercase tracking-wider">Vai trò</th>
-                  <th className="text-left px-5 py-3.5 text-xs font-semibold text-[var(--color-surface-300)] uppercase tracking-wider">Đơn vị</th>
+                  <th className="text-left px-5 py-3.5 text-xs font-semibold text-[var(--color-surface-300)] uppercase tracking-wider">Địa vực</th>
                   <th className="text-left px-5 py-3.5 text-xs font-semibold text-[var(--color-surface-300)] uppercase tracking-wider">Khu vực</th>
                   {isAdmin && <th className="text-right px-5 py-3.5 text-xs font-semibold text-[var(--color-surface-300)] uppercase tracking-wider w-16"></th>}
                 </tr>

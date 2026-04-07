@@ -19,6 +19,8 @@ interface StudentAssignDialogProps {
   userRole?: UserRole | null;
   /** "primary" = assigned_to, "linked" = linked_caretaker_id + linked_caretaker_id_2 */
   mode?: "primary" | "linked";
+  /** Current user's ID (to exclude self from linked caretaker list) */
+  currentUserId?: string;
 }
 
 export function StudentAssignDialog({
@@ -30,6 +32,7 @@ export function StudentAssignDialog({
   currentCourseUser,
   userRole,
   mode = "primary",
+  currentUserId,
 }: StudentAssignDialogProps) {
   const supabase = createClient();
   const [members, setMembers] = useState<CourseUserWithProfile[]>([]);
@@ -64,12 +67,20 @@ export function StudentAssignDialog({
 
     let allMembers = (data as CourseUserWithProfile[]) ?? [];
 
-    // Role-based filtering: ĐVT only sees members in their unit, KVT in their area
-    if (userRole !== "admin" && currentCourseUser) {
-      if (currentCourseUser.role_in_course === "dvt" && currentCourseUser.unit_id) {
-        allMembers = allMembers.filter(m => m.unit_id === currentCourseUser.unit_id);
-      } else if (currentCourseUser.role_in_course === "kvt" && currentCourseUser.area_id) {
-        allMembers = allMembers.filter(m => m.area_id === currentCourseUser.area_id);
+    if (mode === "linked") {
+      // Linked mode: show ALL members in course, regardless of role/unit/area
+      // but exclude current user (can't assign yourself as linked caretaker)
+      if (currentUserId) {
+        allMembers = allMembers.filter(m => m.user_id !== currentUserId);
+      }
+    } else {
+      // Primary mode: role-based filtering (ĐVT only sees members in their unit, etc.)
+      if (userRole !== "admin" && currentCourseUser) {
+        if (currentCourseUser.role_in_course === "dvt" && currentCourseUser.unit_id) {
+          allMembers = allMembers.filter(m => m.unit_id === currentCourseUser.unit_id);
+        } else if (currentCourseUser.role_in_course === "kvt" && currentCourseUser.area_id) {
+          allMembers = allMembers.filter(m => m.area_id === currentCourseUser.area_id);
+        }
       }
     }
 
@@ -101,10 +112,14 @@ export function StudentAssignDialog({
         .eq("id", student.id);
     } else {
       if (!selectedId) { setLoading(false); return; }
+      // Auto-sync unit/area from the selected caretaker
+      const selectedMember = members.find(m => m.id === selectedId);
       await supabase
         .from("students")
         .update({
           assigned_to: selectedId,
+          unit_id: selectedMember?.unit_id ?? null,
+          area_id: selectedMember?.area_id ?? null,
           updated_at: new Date().toISOString(),
         })
         .eq("id", student.id);
