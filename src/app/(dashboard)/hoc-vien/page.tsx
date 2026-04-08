@@ -12,7 +12,7 @@ import { StudentDetailPopup } from "@/components/students/student-detail-popup";
 import { StudentAssignDialog } from "@/components/students/student-assign-dialog";
 import { StudentTransferDialog } from "@/components/students/student-transfer-dialog";
 import { ExcelImporter } from "@/components/students/excel-importer";
-import type { Student, Course, Unit, Area } from "@/lib/types";
+import type { Student, Course, Unit, Area, CourseUser } from "@/lib/types";
 
 export default function StudentsPage() {
   const { user, profile, role, courseUsers, currentCourseUser, setCurrentCourseId } = useUser();
@@ -34,6 +34,12 @@ export default function StudentsPage() {
   const [transferStudent, setTransferStudent] = useState<Student | null>(null);
   const [transferMode, setTransferMode] = useState<"unit" | "area">("unit");
 
+  // Admin-only filters
+  const [filterCaretaker, setFilterCaretaker] = useState(""); // course_user id
+  const [filterLinkedCaretaker, setFilterLinkedCaretaker] = useState(""); // course_user id
+  const [filterUnassigned, setFilterUnassigned] = useState(false);
+  const [courseMembers, setCourseMembers] = useState<Array<{ id: string; name: string; role: string }>>([]); // for dropdown
+
   // Fetch students
   const { students, loading, refresh, totalCount, linkedStudentIds } = useStudents({
     courseId: selectedCourseId,
@@ -41,6 +47,9 @@ export default function StudentsPage() {
     areaId: filterAreaId || undefined,
     search: search || undefined,
     currentCourseUserId: currentCourseUser?.id,
+    assignedTo: filterCaretaker || undefined,
+    linkedCaretakerId: filterLinkedCaretaker || undefined,
+    unassignedOnly: filterUnassigned,
   });
 
   // Toast
@@ -118,6 +127,27 @@ export default function StudentsPage() {
       setFilterAreaId("");
     }
   }, [selectedCourseId, role, courseRole, myUnitId, myAreaId]);
+
+  // Fetch course members for admin filter dropdowns
+  useEffect(() => {
+    if (!selectedCourseId || role !== "admin") return;
+    async function loadMembers() {
+      const { data } = await supabase
+        .from("course_users")
+        .select("id, role_in_course, profile:profiles(full_name)")
+        .eq("course_id", selectedCourseId);
+      if (data) {
+        setCourseMembers(
+          data.map((m: any) => ({
+            id: m.id,
+            name: m.profile?.full_name ?? "Không rõ",
+            role: m.role_in_course ?? "",
+          }))
+        );
+      }
+    }
+    loadMembers();
+  }, [selectedCourseId, role]);
 
   const handleUpdateField = async (studentId: string, field: string, value: string) => {
     await supabase.from("students").update({
@@ -237,6 +267,63 @@ export default function StudentsPage() {
           className="flex-1 min-w-[200px] px-4 py-2.5 bg-[var(--color-surface-800)] border border-[var(--color-surface-700)] text-sm text-[var(--color-surface-100)] placeholder-[var(--color-surface-500)] focus:outline-none focus:border-[var(--color-primary-500)]"
         />
       </div>
+
+      {/* Admin-only: Caretaker Filters */}
+      {role === "admin" && selectedCourseId && (
+        <div className="flex flex-wrap gap-3 items-center">
+          <span className="text-xs font-semibold text-[var(--color-surface-500)] uppercase tracking-wider">Bộ lọc nâng cao:</span>
+
+          {/* Filter by Primary Caretaker */}
+          <select
+            value={filterCaretaker}
+            onChange={(e) => { setFilterCaretaker(e.target.value); setFilterUnassigned(false); }}
+            className="px-3 py-2 bg-[var(--color-surface-800)] border border-[var(--color-surface-700)] text-sm text-[var(--color-surface-100)] focus:outline-none focus:border-[var(--color-primary-500)]"
+          >
+            <option value="">👤 Tất cả NCS</option>
+            {courseMembers.map((m) => (
+              <option key={m.id} value={m.id}>
+                {m.name} ({m.role === "dvt" ? "ĐVT" : m.role === "kvt" ? "KVT" : m.role === "ntd" ? "NTĐ" : "Admin"})
+              </option>
+            ))}
+          </select>
+
+          {/* Filter by Linked Caretaker */}
+          <select
+            value={filterLinkedCaretaker}
+            onChange={(e) => setFilterLinkedCaretaker(e.target.value)}
+            className="px-3 py-2 bg-[var(--color-surface-800)] border border-[var(--color-surface-700)] text-sm text-[var(--color-surface-100)] focus:outline-none focus:border-[var(--color-primary-500)]"
+          >
+            <option value="">🔗 Tất cả NCS LK</option>
+            {courseMembers.map((m) => (
+              <option key={m.id} value={m.id}>
+                {m.name} ({m.role === "dvt" ? "ĐVT" : m.role === "kvt" ? "KVT" : m.role === "ntd" ? "NTĐ" : "Admin"})
+              </option>
+            ))}
+          </select>
+
+          {/* Unassigned toggle */}
+          <button
+            onClick={() => { setFilterUnassigned(!filterUnassigned); if (!filterUnassigned) setFilterCaretaker(""); }}
+            className={`px-3 py-2 text-sm font-medium border transition-all ${
+              filterUnassigned
+                ? "bg-amber-500/20 border-amber-500/50 text-amber-300"
+                : "bg-[var(--color-surface-800)] border-[var(--color-surface-700)] text-[var(--color-surface-400)] hover:text-[var(--color-surface-200)]"
+            }`}
+          >
+            ⚠️ Chưa phân bổ
+          </button>
+
+          {/* Clear all filters */}
+          {(filterCaretaker || filterLinkedCaretaker || filterUnassigned) && (
+            <button
+              onClick={() => { setFilterCaretaker(""); setFilterLinkedCaretaker(""); setFilterUnassigned(false); }}
+              className="px-3 py-2 text-sm text-red-400 hover:text-red-300 transition-colors"
+            >
+              ✕ Xóa lọc
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Excel Importer */}
       {showImporter && selectedCourseId && (

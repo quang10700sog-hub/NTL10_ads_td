@@ -11,6 +11,12 @@ interface UseStudentsOptions {
   search?: string;
   /** Current user's course_user ID — used to also fetch students where user is linked caretaker */
   currentCourseUserId?: string;
+  /** Filter by primary caretaker (assigned_to) */
+  assignedTo?: string;
+  /** Filter by linked caretaker */
+  linkedCaretakerId?: string;
+  /** Filter students with no primary caretaker assigned */
+  unassignedOnly?: boolean;
 }
 
 interface UseStudentsReturn {
@@ -49,6 +55,9 @@ export function useStudents({
   areaId,
   search,
   currentCourseUserId,
+  assignedTo,
+  linkedCaretakerId,
+  unassignedOnly,
 }: UseStudentsOptions): UseStudentsReturn {
   const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(true);
@@ -79,6 +88,11 @@ export function useStudents({
 
       if (unitId) query = query.eq("unit_id", unitId);
       if (areaId) query = query.eq("area_id", areaId);
+      if (assignedTo) query = query.eq("assigned_to", assignedTo);
+      if (linkedCaretakerId) {
+        query = query.or(`linked_caretaker_id.eq.${linkedCaretakerId},linked_caretaker_id_2.eq.${linkedCaretakerId}`);
+      }
+      if (unassignedOnly) query = query.is("assigned_to", null);
       if (search) {
         query = query.or(`full_name.ilike.%${search}%,phone_zalo.ilike.%${search}%`);
       }
@@ -122,7 +136,7 @@ export function useStudents({
     } finally {
       setLoading(false);
     }
-  }, [courseId, unitId, areaId, search, currentCourseUserId, supabase]);
+  }, [courseId, unitId, areaId, search, currentCourseUserId, assignedTo, linkedCaretakerId, unassignedOnly, supabase]);
 
   useEffect(() => {
     fetchStudents();
