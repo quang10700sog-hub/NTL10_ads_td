@@ -136,7 +136,8 @@ export function useStudents({
     } finally {
       setLoading(false);
     }
-  }, [courseId, unitId, areaId, search, currentCourseUserId, assignedTo, linkedCaretakerId, unassignedOnly, supabase]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [courseId, unitId, areaId, search, currentCourseUserId, assignedTo, linkedCaretakerId, unassignedOnly]);
 
   useEffect(() => {
     fetchStudents();

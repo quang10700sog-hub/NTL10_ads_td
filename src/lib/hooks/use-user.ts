@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { Profile, CourseUser, UserRole } from "@/lib/types";
 
@@ -17,6 +17,9 @@ interface UseUserReturn {
   refresh: () => Promise<void>;
 }
 
+// Minimum ms between full data fetches to prevent tab-switch storm
+const FETCH_COOLDOWN_MS = 5000;
+
 export function useUser(): UseUserReturn {
   const [user, setUser] = useState<{ id: string; email: string } | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -26,8 +29,16 @@ export function useUser(): UseUserReturn {
   const [error, setError] = useState<string | null>(null);
 
   const supabase = createClient();
+  const lastFetchRef = useRef<number>(0);
+  const hasFetchedRef = useRef(false);
 
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async (force = false) => {
+    // Cooldown: skip if already fetched recently (unless forced)
+    const now = Date.now();
+    if (!force && hasFetchedRef.current && now - lastFetchRef.current < FETCH_COOLDOWN_MS) {
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
@@ -65,6 +76,8 @@ export function useUser(): UseUserReturn {
       if (cuError) throw cuError;
       setCourseUsers(courseUsersData ?? []);
 
+      lastFetchRef.current = Date.now();
+      hasFetchedRef.current = true;
     } catch (err) {
       setError(err instanceof Error ? err.message : "Đã xảy ra lỗi");
     } finally {
@@ -73,17 +86,22 @@ export function useUser(): UseUserReturn {
   }, [supabase]);
 
   useEffect(() => {
-    fetchData();
+    // Initial fetch
+    fetchData(true);
 
+    // Auth state changes — only re-fetch on actual sign-in/sign-out, not token refreshes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        if (session?.user) {
-          fetchData();
-        } else {
-          setUser(null);
-          setProfile(null);
-          setCourseUsers([]);
+      (event, session) => {
+        if (event === "SIGNED_IN" || event === "SIGNED_OUT") {
+          if (session?.user) {
+            fetchData(true);
+          } else {
+            setUser(null);
+            setProfile(null);
+            setCourseUsers([]);
+          }
         }
+        // TOKEN_REFRESHED, INITIAL_SESSION etc. → skip refetch to avoid reload storms
       }
     );
 
@@ -107,6 +125,6 @@ export function useUser(): UseUserReturn {
     loading,
     error,
     setCurrentCourseId,
-    refresh: fetchData,
+    refresh: () => fetchData(true),
   };
 }

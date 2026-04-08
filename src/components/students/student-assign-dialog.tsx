@@ -57,7 +57,7 @@ export function StudentAssignDialog({
         setSelectedLinkedIds([]);
       }
     }
-  }, [open, courseId]);
+  }, [open, courseId, student, mode]);
 
   async function fetchMembers() {
     const { data } = await supabase
@@ -90,9 +90,13 @@ export function StudentAssignDialog({
   function toggleLinked(id: string) {
     setSelectedLinkedIds(prev => {
       if (prev.includes(id)) {
+        // Uncheck
         return prev.filter(x => x !== id);
       }
-      if (prev.length >= 2) return prev; // Max 2
+      if (prev.length >= 2) {
+        // At limit: replace the first (oldest) selection with the new one
+        return [prev[1], id];
+      }
       return [...prev, id];
     });
   }
@@ -101,33 +105,38 @@ export function StudentAssignDialog({
     if (!student) return;
     setLoading(true);
 
-    if (mode === "linked") {
-      await supabase
-        .from("students")
-        .update({
-          linked_caretaker_id: selectedLinkedIds[0] ?? null,
-          linked_caretaker_id_2: selectedLinkedIds[1] ?? null,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", student.id);
-    } else {
-      if (!selectedId) { setLoading(false); return; }
-      // Auto-sync unit/area from the selected caretaker
-      const selectedMember = members.find(m => m.id === selectedId);
-      await supabase
-        .from("students")
-        .update({
-          assigned_to: selectedId,
-          unit_id: selectedMember?.unit_id ?? null,
-          area_id: selectedMember?.area_id ?? null,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", student.id);
-    }
+    try {
+      if (mode === "linked") {
+        await supabase
+          .from("students")
+          .update({
+            linked_caretaker_id: selectedLinkedIds[0] ?? null,
+            linked_caretaker_id_2: selectedLinkedIds[1] ?? null,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", student.id);
+      } else {
+        if (!selectedId) { setLoading(false); return; }
+        // Auto-sync unit/area from the selected caretaker
+        const selectedMember = members.find(m => m.id === selectedId);
+        await supabase
+          .from("students")
+          .update({
+            assigned_to: selectedId,
+            unit_id: selectedMember?.unit_id ?? null,
+            area_id: selectedMember?.area_id ?? null,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", student.id);
+      }
 
-    setLoading(false);
-    onAssigned();
-    onClose();
+      onAssigned();
+      onClose();
+    } catch (err) {
+      console.error("Lỗi lưu phân bổ:", err);
+    } finally {
+      setLoading(false);
+    }
   }
 
   if (!open || !student) return null;
@@ -191,7 +200,7 @@ export function StudentAssignDialog({
               const isSelectedPrimary = selectedId === m.id;
               const isSelectedLinked = selectedLinkedIds.includes(m.id);
               const isSelected = isLinked ? isSelectedLinked : isSelectedPrimary;
-              const isDisabled = isLinked && !isSelectedLinked && selectedLinkedIds.length >= 2;
+              const isDisabled = false; // All rows always clickable — auto-swap when at limit
 
               return (
                 <button

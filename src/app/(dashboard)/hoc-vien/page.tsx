@@ -12,7 +12,7 @@ import { StudentDetailPopup } from "@/components/students/student-detail-popup";
 import { StudentAssignDialog } from "@/components/students/student-assign-dialog";
 import { StudentTransferDialog } from "@/components/students/student-transfer-dialog";
 import { ExcelImporter } from "@/components/students/excel-importer";
-import type { Student, Course, Unit, Area, CourseUser } from "@/lib/types";
+import type { Student, Course, Unit, Area } from "@/lib/types";
 
 export default function StudentsPage() {
   const { user, profile, role, courseUsers, currentCourseUser, setCurrentCourseId } = useUser();
@@ -73,7 +73,7 @@ export default function StudentsPage() {
   // Fetch courses
   useEffect(() => {
     async function loadCourses() {
-      const { data } = await supabase.from("courses").select("*").eq("status", "active").order("name");
+      const { data } = await supabase.from("courses").select("*").eq("status", "active").order("created_at", { ascending: false });
       setCourses(data ?? []);
       if (data?.length && !selectedCourseId) {
         setSelectedCourseId(data[0].id);
@@ -163,10 +163,15 @@ export default function StudentsPage() {
     showToast("Đã xóa học viên");
   };
 
-  const handleExport = () => {
-    const courseName = courses.find((c) => c.id === selectedCourseId)?.name ?? "Export";
-    exportStudentsToExcel(students, courseName);
-    showToast("Đã xuất file Excel");
+  const handleExport = async () => {
+    try {
+      const courseName = courses.find((c) => c.id === selectedCourseId)?.name ?? "Export";
+      await exportStudentsToExcel(students, courseName);
+      showToast("Đã xuất file Excel");
+    } catch (err) {
+      console.error("Lỗi xuất Excel:", err);
+      showToast("Lỗi xuất file Excel. Vui lòng thử lại.");
+    }
   };
 
   return (
