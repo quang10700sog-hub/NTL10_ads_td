@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { createClient } from "@/lib/supabase/client";
 import type { Student } from "@/lib/types";
 
@@ -80,13 +81,13 @@ export function StudentDetailPopup({ student, open, onClose }: StudentDetailPopu
 
   const dynamicEntries = Object.entries(student.dynamic_data ?? {});
 
-  return (
+  return createPortal(
     <>
       {/* Overlay */}
-      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50" onClick={onClose} />
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999]" onClick={onClose} />
 
       {/* Panel */}
-      <div className="fixed top-0 right-0 h-full w-full max-w-lg bg-[var(--color-surface-900)] border-l border-[var(--color-surface-800)] z-50 overflow-y-auto animate-slide-in-right">
+      <div className="fixed top-0 right-0 h-screen w-full max-w-lg bg-[var(--color-surface-900)] border-l border-[var(--color-surface-800)] z-[9999] flex flex-col animate-slide-in-right">
         {/* Header */}
         <div className="sticky top-0 bg-[var(--color-surface-900)]/95 backdrop-blur-lg border-b border-[var(--color-surface-800)] px-6 py-4 flex items-center justify-between z-10">
           <h2 className="text-lg font-semibold text-[var(--color-surface-100)]">Chi tiết Học viên</h2>
@@ -100,7 +101,7 @@ export function StudentDetailPopup({ student, open, onClose }: StudentDetailPopu
           </button>
         </div>
 
-        <div className="p-6 space-y-6">
+        <div className="flex-1 overflow-y-auto p-6 space-y-6">
           {/* Avatar & Name */}
           <div className="flex items-center gap-4">
             <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-xl font-bold text-white"
@@ -279,6 +280,7 @@ export function StudentDetailPopup({ student, open, onClose }: StudentDetailPopu
           )}
         </div>
       </div>
-    </>
+    </>,
+    document.body
   );
 }

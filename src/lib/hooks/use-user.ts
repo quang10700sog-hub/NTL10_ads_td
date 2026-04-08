@@ -31,6 +31,7 @@ export function useUser(): UseUserReturn {
   const supabase = createClient();
   const lastFetchRef = useRef<number>(0);
   const hasFetchedRef = useRef(false);
+  const initialLoadDone = useRef(false);
 
   const fetchData = useCallback(async (force = false) => {
     // Cooldown: skip if already fetched recently (unless forced)
@@ -40,7 +41,10 @@ export function useUser(): UseUserReturn {
     }
 
     try {
-      setLoading(true);
+      // Only show loading spinner on initial load, not on refresh/background fetches
+      if (!initialLoadDone.current) {
+        setLoading(true);
+      }
       setError(null);
 
       const { data: { user: authUser } } = await supabase.auth.getUser();
@@ -82,6 +86,7 @@ export function useUser(): UseUserReturn {
       setError(err instanceof Error ? err.message : "Đã xảy ra lỗi");
     } finally {
       setLoading(false);
+      initialLoadDone.current = true;
     }
   }, [supabase]);
 
