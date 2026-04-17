@@ -140,7 +140,7 @@ export function StudentTable({
               <th className="text-left px-4 py-3 text-xs font-semibold text-[var(--color-surface-400)] uppercase min-w-[120px] border-r border-[var(--color-surface-700)]">TT Học tập</th>
               <th className="text-left px-4 py-3 text-xs font-semibold text-[var(--color-surface-400)] uppercase min-w-[120px] border-r border-[var(--color-surface-700)]">TT Liên lạc</th>
               <th className="text-left px-4 py-3 text-xs font-semibold text-[var(--color-surface-400)] uppercase min-w-[160px] border-r border-[var(--color-surface-700)]">Nội dung CS</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-[var(--color-surface-400)] uppercase border-r border-[var(--color-surface-700)]">Ghi chú TVV</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold text-[var(--color-surface-400)] uppercase min-w-[160px] border-r border-[var(--color-surface-700)]">Ghi chú TVV</th>
               <th className="text-right px-4 py-3 text-xs font-semibold text-[var(--color-surface-400)] uppercase w-24">Thao tác</th>
             </tr>
           </thead>
@@ -340,7 +340,7 @@ export function StudentTable({
                     ) : (
                       <span
                         onClick={() => perms.canEdit && startEdit(student.id, "care_content", student.care_content ?? "")}
-                        className={`text-sm ${perms.canEdit ? "cursor-pointer hover:text-[var(--color-primary-400)]" : ""} text-[var(--color-surface-300)] line-clamp-1`}
+                        className={`text-sm ${perms.canEdit ? "cursor-pointer hover:text-[var(--color-primary-400)]" : ""} text-[var(--color-surface-300)] whitespace-pre-wrap break-words`}
                       >
                         {student.care_content || "—"}
                       </span>
@@ -361,7 +361,7 @@ export function StudentTable({
                     ) : (
                       <span
                         onClick={() => perms.canEditAdvisorNote && startEdit(student.id, "advisor_note", student.advisor_note ?? "")}
-                        className={`text-sm ${perms.canEditAdvisorNote ? "cursor-pointer hover:text-[var(--color-primary-400)]" : ""} text-[var(--color-surface-300)] line-clamp-1`}
+                        className={`text-sm ${perms.canEditAdvisorNote ? "cursor-pointer hover:text-[var(--color-primary-400)]" : ""} text-[var(--color-surface-300)] whitespace-pre-wrap break-words`}
                       >
                         {student.advisor_note || "—"}
                       </span>
