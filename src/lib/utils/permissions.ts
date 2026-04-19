@@ -32,8 +32,8 @@ export function canViewStudent(
       return student.area_id === courseUser.area_id;
 
     case "tuvanvien":
-      // Advisor: only students linked via advisor_links
-      return advisorStudentIds?.includes(student.id) ?? false;
+      // Advisor: view all students in the course
+      return true;
 
     default:
       return false;
@@ -69,8 +69,8 @@ export function canEditStudent(
       return student.assigned_to === courseUser.id;
 
     case "tuvanvien":
-      // Advisor: cannot edit (only advisor_note via separate logic)
-      return false;
+      // Advisor: can edit fields on student (detail popup, table fields)
+      return true;
 
     default:
       return false;
@@ -110,10 +110,7 @@ export function canEditAdvisorNote(
   studentId?: string
 ): boolean {
   if (!courseUser || !studentId) return false;
-  return (
-    courseUser.role_in_course === "tuvanvien" &&
-    (advisorStudentIds?.includes(studentId) ?? false)
-  );
+  return courseUser.role_in_course === "tuvanvien";
 }
 
 /**
