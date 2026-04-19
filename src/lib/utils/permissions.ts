@@ -69,8 +69,8 @@ export function canEditStudent(
       return student.assigned_to === courseUser.id;
 
     case "tuvanvien":
-      // Advisor: can edit fields on student (detail popup, table fields)
-      return true;
+      // Advisor: cannot edit general fields (only advisor_note via canEditAdvisorNote)
+      return false;
 
     default:
       return false;
